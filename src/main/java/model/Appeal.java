@@ -2,58 +2,83 @@ package model;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import controller.GetAppeal;
+
+import java.io.IOException;
 
 
 public class Appeal {
 
-    public Appeal(JsonNode answer) throws NullPointerException {
+    private final JsonNode issues;
 
-        JsonNode issues = answer.get("issue");
+    public Appeal(JsonNode answer) throws NullPointerException, IOException {
+
+        issues = answer.get("issue");
 
         trackerName = issues.get("tracker").get("name").asText();
         id = "#" + issues.get("id").asText();
         status = issues.get("status").get("name").asText();
         subject = issues.get("subject").asText();
         priority = issues.get("priority").get("name").asText();
-        incomeCanal = issues.get("custom_fields").get(0).get("value").asText();
-        taskFrom = issues.get("custom_fields").get(3).get("value").asText();
         dueDate = issues.get("due_date").asText();
 
-        reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
-        incomeDate = issues.get("custom_fields").get(1).get("value").asText();
-        createdDate = issues.get("created_on").asText().replace("T"," ").replace("Z"," ");
+        createdDate = issues.get("created_on").asText().replace("T", " ").replace("Z", "");
+
+        if (!trackerName.equals("Request") && !trackerName.equals("Инцидент")) {
+            taskFrom = issues.get("custom_fields").get(3).get("value").asText();
+            incomeCanal = issues.get("custom_fields").get(0).get("value").asText();
+            reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
+            incomeDate = issues.get("custom_fields").get(1).get("value").asText();
+
+        } else {
+            taskFrom = "";
+            incomeCanal = "";
+            reasonFoTask = "";
+            incomeDate = "";
+        }
 
 
-        if (trackerName.equals("Ошибка")) {
-            assignedTo = issues.get("assigned_to").get("name").asText();
+        if (trackerName.equals("Ошибка") || trackerName.equals("Request")) {
+
+            if (!trackerName.equals("Request")) {
+                assignedTo = issues.get("assigned_to").get("name").asText();
+            } else {
+                assignedTo = "";
+            }
+
             parentId = issues.get("parent").get("id").asText();
+            setLinkedParent(parentId);
         } else {
             assignedTo = "";
             parentId = "";
         }
 
+
         if (issues.findValue("children") != null) {
 
-            linkedTasks = issues.get("children").get(0).get("tracker").get("name").asText()
+            linkedTasksAndId = issues.get("children").get(0).get("tracker").get("name").asText()
                     + " #" +
                     issues.get("children").get(0).get("id").asText();
-
+            setAssignedInLinkedTasksChildren();
             if (issues.get("children").get(0).findValue("children") != null) {
 
-                linkedTasksChildren = issues.get("children").get(0).get("children")
+                linkedTasksChildrenAndId = issues.get("children").get(0).get("children")
                         .get(0).get("tracker").get("name").asText()
                         + " #" +
                         issues.get("children").get(0).get("children")
                                 .get(0).get("id").asText();
 
+                setAssignedInLinkedTasksChildren();
+
             } else {
-                linkedTasksChildren = "";
+                linkedTasksChildrenAndId = "";
+
             }
-
-
         } else {
-            linkedTasks = "";
-            linkedTasksChildren = "";
+            linkedTasksAndId = "";
+            linkedTasksChildrenAndId = "";
+            assignedToTaskInLinkedTasksChildren = "";
+
         }
 
     }
@@ -65,8 +90,8 @@ public class Appeal {
     private final String incomeCanal;
     private final String taskFrom;
     private final String priority;
-    private final String linkedTasks;
-    private final String linkedTasksChildren;
+    private final String linkedTasksAndId;
+    private final String linkedTasksChildrenAndId;
     private final String dueDate;
 
     private final String reasonFoTask;
@@ -76,20 +101,60 @@ public class Appeal {
 
     private final String createdDate;
 
-    public String getStatus() {
-        return status;
+    private String assignedToTaskInLinkedTasksChildren;
+    private String linkedParent;
+
+    private void setLinkedParent(String parentId) throws IOException {
+
+        GetAppeal getAppeal = new GetAppeal();
+        JsonNode jsonNode = getAppeal.getAppealFromRedmine(parentId);
+        if (jsonNode.get("issue").findValue("parent") != null) {
+            String linkedParentId = jsonNode.get("issue").get("parent").get("id").asText();
+            jsonNode = getAppeal.getAppealFromRedmine(linkedParentId);
+            this.linkedParent = jsonNode.get("issue").get("tracker").get("name").asText()
+                    + " #" + jsonNode.get("issue").get("id").asText();
+        } else {
+            this.linkedParent = jsonNode.get("issue").get("tracker").get("name").asText()
+                    + " #" + jsonNode.get("issue").get("id").asText();
+        }
+
     }
 
-    public String getCreatedDate() {
-        return createdDate;
+    private void setAssignedInLinkedTasksChildren() throws IOException {
+
+        GetAppeal getAppeal = new GetAppeal();
+
+
+        if (issues.get("children").get(0).findValue("children") != null) {
+
+            JsonNode jsonNode = getAppeal.getAppealFromRedmine(issues.get("children").get(0).get("children")
+                    .get(0).get("id").asText());
+
+            this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
+
+        } else {
+
+            JsonNode jsonNode = getAppeal.getAppealFromRedmine(issues.get("children").get(0).get("id").asText());
+
+            this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
+        }
+
+    }
+
+    public String getLinkedParent() {
+        return linkedParent;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getTrackerName() {
         return trackerName;
     }
 
-    public String getId() {
-        return id;
+    public String getStatus() {
+        return status;
     }
 
     public String getSubject() {
@@ -108,12 +173,12 @@ public class Appeal {
         return priority;
     }
 
-    public String getLinkedTasks() {
-        return linkedTasks;
+    public String getLinkedTasksAndId() {
+        return linkedTasksAndId;
     }
 
-    public String getLinkedTasksChildren() {
-        return linkedTasksChildren;
+    public String getLinkedTasksChildrenAndId() {
+        return linkedTasksChildrenAndId;
     }
 
     public String getDueDate() {
@@ -132,7 +197,15 @@ public class Appeal {
         return assignedTo;
     }
 
+    public String getAssignedToTaskInLinkedTasksChildren() {
+        return assignedToTaskInLinkedTasksChildren;
+    }
+
     public String getParentId() {
         return parentId;
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
     }
 }

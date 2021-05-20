@@ -1,9 +1,4 @@
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import controller.GetAppeal;
-import kong.unirest.HttpResponse;
-import kong.unirest.Unirest;
 import model.PrivateData;
 import model.Report;
 
@@ -12,7 +7,7 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        PrivateData pd = new PrivateData();
+        PrivateData privateData = new PrivateData();
 
 
         InputStream inputStream = System.in;
@@ -33,7 +28,7 @@ public class Main {
             for (String i : listTaskId
             ) {
                 GetAppeal appeal = new GetAppeal();
-                appeal.getAppealList(i);
+                appeal.setAppealInList(i);
 
             }
 

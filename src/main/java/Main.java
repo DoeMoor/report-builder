@@ -7,8 +7,6 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        PrivateData privateData = new PrivateData();
-
 
         InputStream inputStream = System.in;
         Reader inputStreamReader = new InputStreamReader(inputStream);
@@ -22,6 +20,16 @@ public class Main {
             if (taskId.equals("q")) {
                 break;
             }
+            if (taskId.equals("print")){
+
+                for (String i : Report.getListTask()
+                ) {
+                    System.out.println(i);
+                }
+
+                break;
+
+            }
 
             String[] listTaskId = taskId.split(",");
 
@@ -29,15 +37,9 @@ public class Main {
             ) {
                 GetAppeal appeal = new GetAppeal();
                 appeal.setAppealInList(i);
-
             }
 
-            for (String i : Report.getListTask()
-            ) {
 
-                System.out.println(i);
-
-            }
         }
 
 

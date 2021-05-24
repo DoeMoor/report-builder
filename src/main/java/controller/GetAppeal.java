@@ -24,10 +24,8 @@ public class GetAppeal {
                 .asString();
 
         ObjectMapper respMap = new ObjectMapper();
-        JsonNode answer = respMap.readTree(response.getBody());
-        return answer;
+        return respMap.readTree(response.getBody());
     }
-
 
 
     public void setAppealInList(String id) throws IOException {
@@ -54,13 +52,13 @@ public class GetAppeal {
 
             return String.format("%s %s: %s\n(%s, %s, сделать до %s, %s)\n\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
-                    appeal.getAssignedTo(),appeal.getPriority(),appeal.getDueDate(),
+                    appeal.getAssignedTo(), appeal.getPriority(), appeal.getDueDate(),
                     appeal.getLinkedParent()
 
             );
 
 
-        } else if (appeal.getTrackerName().equals("Инцидент")){
+        } else if (appeal.getTrackerName().equals("Инцидент")) {
 
             return String.format("%s %s: %s\n(%s, %s, %s)\n(Поставлена задача %s, %s)\n\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
@@ -77,13 +75,22 @@ public class GetAppeal {
             );
         }
 
-        return "Ошибка, тип заявки :"+ appeal.getTrackerName() ;
+        return "Ошибка, тип заявки :" + appeal.getTrackerName();
 
     }
 
     private String getClosedAppeal(Appeal appeal) {
 
-        return String.format("%s %s %s\n(%s, %s,%s)\n(%s)\n\n",
+        if (appeal.getTrackerName().equals("Инцидент")) {
+
+            return String.format("%s %s: %s\n(Связано с %s), (%s)n",
+                    appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
+                    appeal.getLinkedParent(), appeal.getReasonFoTask()
+            );
+        }
+
+
+        return String.format("%s %s: %s\n(%s, %s,%s)\n(%s)\n\n",
                 appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                 appeal.getIncomeCanal(), appeal.getTaskFrom(), appeal.getIncomeDate(),
                 appeal.getReasonFoTask()
@@ -91,7 +98,7 @@ public class GetAppeal {
     }
 
     private String assignTaskUser(String assignTaskUser) {
-        if (assignTaskUser.equals(null)){
+        if (assignTaskUser.equals(null)) {
 
             return "Пользователь не найден";
 
@@ -107,7 +114,7 @@ public class GetAppeal {
 
     }
 
-    private void stopItGetSomeHelp(){
+    private void stopItGetSomeHelp() {
 
     }
 

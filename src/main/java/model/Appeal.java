@@ -22,7 +22,8 @@ public class Appeal {
         priority = issues.get("priority").get("name").asText();
         dueDate = issues.get("due_date").asText();
 
-        createdDate = issues.get("created_on").asText().replace("T", " ").replace("Z", "");
+        createdDate = issues.get("created_on").asText().replace("T", " ")
+                .replace("Z", "");
 
         if (!trackerName.equals("Request") && !trackerName.equals("Инцидент")) {
             taskFrom = issues.get("custom_fields").get(3).get("value").asText();
@@ -136,7 +137,13 @@ public class Appeal {
 
             JsonNode jsonNode = getAppeal.getAppealFromRedmine(issues.get("children").get(0).get("id").asText());
 
-            this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
+            if (jsonNode.get("issue").findValue("children") != null) {
+
+                this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
+
+            }
+            this.assignedToTaskInLinkedTasksChildren = "";
+
         }
 
     }

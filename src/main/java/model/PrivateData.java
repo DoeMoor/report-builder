@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-public class PrivateData {
+public final class PrivateData {
 
     private static String URL;
     private static String KEY_VALUE;

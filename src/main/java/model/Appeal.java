@@ -9,6 +9,27 @@ import java.io.IOException;
 
 public class Appeal {
 
+    private final String id;
+    private final String trackerName;
+    private final String status;
+    private final String subject;
+    private final String incomeCanal;
+    private final String taskFrom;
+    private final String priority;
+    private final String linkedTasksAndId;
+    private final String linkedTasksChildrenAndId;
+    private final String dueDate;
+
+    private final String reasonFoTask;
+    private final String incomeDate;
+    private final String assignedTo;
+    private final String parentId;
+
+    private final String createdDate;
+
+    private String assignedToTaskInLinkedTasksChildren;
+    private String linkedParent;
+
     private final JsonNode issues;
 
     public Appeal(JsonNode answer) throws NullPointerException, IOException {
@@ -20,10 +41,18 @@ public class Appeal {
         status = issues.get("status").get("name").asText();
         subject = issues.get("subject").asText();
         priority = issues.get("priority").get("name").asText();
-        dueDate = issues.get("due_date").asText();
+
+
+        if (issues.get("due_date").asText() == "null"){
+            dueDate = "крайнего срока нет";
+        } else {
+            dueDate = issues.get("due_date").asText();
+        }
+
 
         createdDate = issues.get("created_on").asText().replace("T", " ")
                 .replace("Z", "");
+
 
         if (!trackerName.equals("Request") && !trackerName.equals("Инцидент")) {
             taskFrom = issues.get("custom_fields").get(3).get("value").asText();
@@ -31,17 +60,26 @@ public class Appeal {
             reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
             incomeDate = issues.get("custom_fields").get(1).get("value").asText();
 
-        } else {
-            taskFrom = "";
+        } else if (trackerName.equals("Инцидент")) {
+
+            reasonFoTask = issues.get("custom_fields").get(2).get("value").asText();
             incomeCanal = "";
-            reasonFoTask = "";
+            taskFrom = "";
             incomeDate = "";
+
+        } else {
+
+            reasonFoTask = "";
+            incomeCanal = "";
+            taskFrom = "";
+            incomeDate = "";
+
         }
 
 
-        if (trackerName.equals("Ошибка") || trackerName.equals("Request")) {
+        if (!trackerName.equals("Обращение")) {
 
-            if (!trackerName.equals("Request")) {
+            if (trackerName.equals("Ошибка")) {
                 assignedTo = issues.get("assigned_to").get("name").asText();
             } else {
                 assignedTo = "";
@@ -84,26 +122,7 @@ public class Appeal {
 
     }
 
-    private final String id;
-    private final String trackerName;
-    private final String status;
-    private final String subject;
-    private final String incomeCanal;
-    private final String taskFrom;
-    private final String priority;
-    private final String linkedTasksAndId;
-    private final String linkedTasksChildrenAndId;
-    private final String dueDate;
 
-    private final String reasonFoTask;
-    private final String incomeDate;
-    private final String assignedTo;
-    private final String parentId;
-
-    private final String createdDate;
-
-    private String assignedToTaskInLinkedTasksChildren;
-    private String linkedParent;
 
     private void setLinkedParent(String parentId) throws IOException {
 

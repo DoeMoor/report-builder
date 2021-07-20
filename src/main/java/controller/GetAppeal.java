@@ -17,11 +17,12 @@ public class GetAppeal {
 
     public JsonNode getAppealFromRedmine(String id) throws IOException {
 
-        HttpResponse<String> response = Unirest.get("http://team.progredis.ru/issues/" + "{taskId}.json")
+        HttpResponse<String> response = Unirest.get(PrivateData.getURL() + "/{taskId}.json")
                 .routeParam("taskId", String.valueOf(id))
-                .queryString("key", "46fde5cffcec5a129961b2b99bc904c161d52c4c")
+                .queryString("key", PrivateData.getKeyValue())
                 .queryString("include", "children")
                 .asString();
+
 
         ObjectMapper respMap = new ObjectMapper();
         return respMap.readTree(response.getBody());
@@ -31,7 +32,7 @@ public class GetAppeal {
     public void setAppealInList(String id) throws IOException {
         appeal = new Appeal(getAppealFromRedmine(id));
 
-        if (appeal.getStatus().equals("Новая")) {
+        if (appeal.getStatus().equals("Новая") || appeal.getStatus().equals("Новый") || appeal.getStatus().equals("В работе")){
             Report.setListTask(getNewAppeal(appeal));
         } else {
             Report.setListTask(getClosedAppeal(appeal));
@@ -41,7 +42,7 @@ public class GetAppeal {
     private String getNewAppeal(Appeal appeal) {
         if (appeal.getTrackerName().equals("Обращение")) {
 
-            return String.format("%s %s: %s\n(%s, %s, %s)\n(%s, %s, %s, %s)\n\n",
+            return String.format("%s %s: %s\n(%s, %s, %s)\n(%s, %s, %s, %s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getIncomeCanal(), appeal.getTaskFrom(), appeal.getPriority(),
                     appeal.getLinkedTasksAndId(), appeal.getLinkedTasksChildrenAndId(),
@@ -50,17 +51,24 @@ public class GetAppeal {
 
         } else if (appeal.getTrackerName().equals("Ошибка")) {
 
-            return String.format("%s %s: %s\n(%s, %s, сделать до %s, %s)\n\n",
+            if (appeal.getPriority().equals("Высокий") || appeal.getPriority().equals("Немедленный")){
+
+                return String.format("%s %s: %s\n(%s,связано с %s)\n",
+                        appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
+                        appeal.getAssignedTo(),appeal.getLinkedParent()
+                );
+            }
+
+            return String.format("%s %s: %s\n(%s, %s, сделать до %s, %s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getAssignedTo(), appeal.getPriority(), appeal.getDueDate(),
                     appeal.getLinkedParent()
-
             );
 
 
         } else if (appeal.getTrackerName().equals("Инцидент")) {
 
-            return String.format("%s %s: %s\n(%s, %s, %s)\n(Поставлена задача %s, %s)\n\n",
+            return String.format("%s %s: %s\n(%s, %s, %s)\n(Поставлена задача %s, %s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getIncomeCanal(), appeal.getCreatedDate(), appeal.getPriority(),
                     appeal.getLinkedTasksAndId(), appeal.getAssignedToTaskInLinkedTasksChildren()
@@ -68,7 +76,7 @@ public class GetAppeal {
 
         } else if (appeal.getTrackerName().equals("Request")) {
 
-            return String.format("%s %s: %s\n(%s)\n\n",
+            return String.format("%s %s: %s\n(%s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getLinkedParent()
 
@@ -83,14 +91,14 @@ public class GetAppeal {
 
         if (appeal.getTrackerName().equals("Инцидент")) {
 
-            return String.format("%s %s: %s\n(Связано с %s), (%s)n",
+            return String.format("%s %s: %s\n(Связано с %s), (%s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getLinkedParent(), appeal.getReasonFoTask()
             );
         }
 
 
-        return String.format("%s %s: %s\n(%s, %s,%s)\n(%s)\n\n",
+        return String.format("%s %s: %s\n(%s, %s,%s)\n(%s)\n",
                 appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                 appeal.getIncomeCanal(), appeal.getTaskFrom(), appeal.getIncomeDate(),
                 appeal.getReasonFoTask()

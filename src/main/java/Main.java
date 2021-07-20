@@ -1,4 +1,5 @@
 import controller.GetAppeal;
+import controller.GetTaskList;
 import model.PrivateData;
 import model.Report;
 
@@ -7,20 +8,44 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws IOException {
 
+        GetTaskList gt = new GetTaskList();
+        PrivateData privateData = new PrivateData();
 
         InputStream inputStream = System.in;
         Reader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-
         while (true) {
-            System.out.print("Ввести номеа задач : ");
+
+            System.out.printf("PrivateData.getKeyValue() = %s \nPrivateData.getURL() = %s \n",
+                    PrivateData.getKeyValue(), PrivateData.getURL()
+            );
+
+
+            System.out.print("1 = открытые \n2 = закрытые \nВвести типы задач :");
+
+
+
+
             String taskId = bufferedReader.readLine();
 
+            if (taskId.equals("1")){
+                taskId = gt.getTaskList("open","created_on");
+            }
+
+            if (taskId.equals("2")){
+                taskId = gt.getTaskList("closed","closed_on");
+            }
+
+
             if (taskId.equals("q")) {
+
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+
                 break;
             }
-            if (taskId.equals("print")){
+            if (taskId.equals("")){
 
                 for (String i : Report.getListTask()
                 ) {
@@ -31,7 +56,7 @@ public class Main {
 
             }
 
-            String[] listTaskId = taskId.split(",");
+            String[] listTaskId = taskId.split(" ");
 
             for (String i : listTaskId
             ) {
@@ -41,6 +66,8 @@ public class Main {
 
 
         }
+
+
 
 
 

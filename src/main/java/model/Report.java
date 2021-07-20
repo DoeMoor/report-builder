@@ -3,7 +3,7 @@ package model;
 import java.util.ArrayList;
 
 public class Report {
-   private static ArrayList<String> listTask = new ArrayList<>();
+   private static final ArrayList<String> listTask = new ArrayList<>();
 
     public static void setListTask(String reportPrinter) {
         listTask.add(reportPrinter);

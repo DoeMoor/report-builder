@@ -59,7 +59,7 @@ public class GetAppeal {
                 );
             }
 
-            return String.format("%s %s: %s\n(%s, %s, сделать до %s, %s)\n",
+            return String.format("%s %s: %s\n(%s, %s, сделать до: %s, %s)\n",
                     appeal.getTrackerName(), appeal.getId(), appeal.getSubject(),
                     appeal.getAssignedTo(), appeal.getPriority(), appeal.getDueDate(),
                     appeal.getLinkedParent()
@@ -108,7 +108,7 @@ public class GetAppeal {
     private String assignTaskUser(String assignTaskUser) {
         if (assignTaskUser.equals(null)) {
 
-            return "Пользователь не найден";
+            return "Ответственный не назначен";
 
         }
         if (assignTaskUser.equals("Юра") || assignTaskUser.equals("Преградов Юрий")) {
@@ -117,7 +117,7 @@ public class GetAppeal {
         (assignTaskUser.equals("Саша") || assignTaskUser.equals("Асташкин Александр")) {
             return "@astashkinav";
         } else {
-            return "Пользователь не найден";
+            return assignTaskUser;
         }
 
     }

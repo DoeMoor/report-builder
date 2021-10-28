@@ -57,10 +57,14 @@ public class Appeal {
         if (!trackerName.equals("Request") && !trackerName.equals("Инцидент")) {
             taskFrom = issues.get("custom_fields").get(3).get("value").asText();
             incomeCanal = issues.get("custom_fields").get(0).get("value").asText();
-            reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
+            if (issues.get("project").get("name").asText().equals("ДО1")){
+                reasonFoTask = "";
+            } else {
+                reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
+            }
             incomeDate = issues.get("custom_fields").get(1).get("value").asText();
 
-        } else if (trackerName.equals("Инцидент")) {
+        } else if (trackerName.equals("Инцидент") && !issues.get("project").get("name").asText().equals("ДО1") ){
 
             reasonFoTask = issues.get("custom_fields").get(2).get("value").asText();
             incomeCanal = "";
@@ -85,8 +89,14 @@ public class Appeal {
                 assignedTo = "";
             }
 
-            parentId = issues.get("parent").get("id").asText();
-            setLinkedParent(parentId);
+            if(issues.findValue("parent") != null) {
+                parentId = issues.get("parent").get("id").asText();
+                setLinkedParent(parentId);
+            } else {
+                parentId = "";
+            }
+
+
         } else {
             assignedTo = "";
             parentId = "";

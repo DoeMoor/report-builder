@@ -1,11 +1,11 @@
 package model;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
-import controller.GetAppeal;
+import controller.RedmineConnector;
 
 import java.io.IOException;
-
+import java.util.List;
+import java.util.Objects;
 
 public class Appeal {
 
@@ -13,7 +13,7 @@ public class Appeal {
     private final String trackerName;
     private final String status;
     private final String subject;
-    private final String incomeCanal;
+    private final String incomeChannel;
     private final String taskFrom;
     private final String priority;
     private final String linkedTasksAndId;
@@ -26,14 +26,16 @@ public class Appeal {
     private final String parentId;
 
     private final String createdDate;
-
-    private String assignedToTaskInLinkedTasksChildren;
-    private String linkedParent;
-
     private final JsonNode issues;
+    private final String assignedToTaskInLinkedTasksChildren;
+    private final String linkedParent;
+    private final String relations;
+    private final boolean children;
 
     public Appeal(JsonNode answer) throws NullPointerException, IOException {
 
+        String initAssignedUser = "Ответственный не назначен";
+        String initLinkedParent = "Связанный, родительский объект не нашёлся";
         issues = answer.get("issue");
 
         trackerName = issues.get("tracker").get("name").asText();
@@ -42,44 +44,62 @@ public class Appeal {
         subject = issues.get("subject").asText();
         priority = issues.get("priority").get("name").asText();
 
+        children = issues.hasNonNull("children");
 
-        if (issues.get("due_date").asText() == "null"){
+        if (Objects.equals(issues.get("due_date").asText(), "null")) {
             dueDate = "крайнего срока нет";
         } else {
             dueDate = issues.get("due_date").asText();
         }
 
-
         createdDate = issues.get("created_on").asText().replace("T", " ")
                 .replace("Z", "");
 
-
-        if (!trackerName.equals("Request") && !trackerName.equals("Инцидент")) {
-            taskFrom = issues.get("custom_fields").get(3).get("value").asText();
-            incomeCanal = issues.get("custom_fields").get(0).get("value").asText();
-            if (issues.get("project").get("name").asText().equals("ДО1")){
+        if (!trackerName.equals("Request")
+                && !trackerName.equals("Инцидент")) {
+            if (trackerName.equals("Обращение")) {
+                taskFrom = issues.get("custom_fields").get(4).get("value").asText();
+            } else {
+                taskFrom = issues.get("custom_fields").get(3).get("value").asText();
+            }
+            incomeChannel = issues.get("custom_fields").get(0).get("value").asText();
+            if (issues.get("project").get("name").asText().equals("ДО1")
+                    || trackerName.equals("Сопровождение")) {
                 reasonFoTask = "";
             } else {
                 reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
             }
             incomeDate = issues.get("custom_fields").get(1).get("value").asText();
 
-        } else if (trackerName.equals("Инцидент") && !issues.get("project").get("name").asText().equals("ДО1") ){
+        } else if (trackerName.equals("Инцидент")
+                && !issues.get("project").get("name").asText().equals("ДО1")) {
 
-            reasonFoTask = issues.get("custom_fields").get(2).get("value").asText();
-            incomeCanal = "";
+
+            initAssignedUser = initAssignedUser();
+            initLinkedParent = initLinkedParent();
+
+            reasonFoTask = new Appeal(new RedmineConnector()
+                    .getTask(issues.get("parent")
+                            .get("id")
+                            .asText()))
+                    .getReasonFoTask();
+            incomeChannel = new Appeal(new RedmineConnector()
+                    .getTask(issues.get("children")
+                            .get(0)
+                            .get("id")
+                            .asText()))
+                    .getIncomeChannel();
             taskFrom = "";
             incomeDate = "";
 
         } else {
 
             reasonFoTask = "";
-            incomeCanal = "";
+            incomeChannel = "";
             taskFrom = "";
             incomeDate = "";
 
         }
-
 
         if (!trackerName.equals("Обращение")) {
 
@@ -89,9 +109,9 @@ public class Appeal {
                 assignedTo = "";
             }
 
-            if(issues.findValue("parent") != null) {
+            if (issues.findValue("parent") != null) {
                 parentId = issues.get("parent").get("id").asText();
-                setLinkedParent(parentId);
+                initLinkedParent = setLinkedParent(parentId);
             } else {
                 parentId = "";
             }
@@ -102,13 +122,13 @@ public class Appeal {
             parentId = "";
         }
 
-
         if (issues.findValue("children") != null) {
 
             linkedTasksAndId = issues.get("children").get(0).get("tracker").get("name").asText()
                     + " #" +
                     issues.get("children").get(0).get("id").asText();
-            setAssignedInLinkedTasksChildren();
+            initAssignedUser = setAssignedInLinkedTasksChildren(initAssignedUser);
+
             if (issues.get("children").get(0).findValue("children") != null) {
 
                 linkedTasksChildrenAndId = issues.get("children").get(0).get("children")
@@ -117,8 +137,6 @@ public class Appeal {
                         issues.get("children").get(0).get("children")
                                 .get(0).get("id").asText();
 
-                setAssignedInLinkedTasksChildren();
-
             } else {
                 linkedTasksChildrenAndId = "";
 
@@ -126,55 +144,57 @@ public class Appeal {
         } else {
             linkedTasksAndId = "";
             linkedTasksChildrenAndId = "";
-            assignedToTaskInLinkedTasksChildren = "";
-
         }
 
-    }
-
-
-
-    private void setLinkedParent(String parentId) throws IOException {
-
-        GetAppeal getAppeal = new GetAppeal();
-        JsonNode jsonNode = getAppeal.getAppealFromRedmine(parentId);
-        if (jsonNode.get("issue").findValue("parent") != null) {
-            String linkedParentId = jsonNode.get("issue").get("parent").get("id").asText();
-            jsonNode = getAppeal.getAppealFromRedmine(linkedParentId);
-            this.linkedParent = jsonNode.get("issue").get("tracker").get("name").asText()
-                    + " #" + jsonNode.get("issue").get("id").asText();
+        if (issues.hasNonNull("relations")) {
+            relations = issues.get("relations").get(0).get("issue_id").asText();
         } else {
-            this.linkedParent = jsonNode.get("issue").get("tracker").get("name").asText()
-                    + " #" + jsonNode.get("issue").get("id").asText();
+            relations = "Not have relations";
         }
+
+        assignedToTaskInLinkedTasksChildren = initAssignedUser;
+        linkedParent = initLinkedParent;
 
     }
 
-    private void setAssignedInLinkedTasksChildren() throws IOException {
-
-        GetAppeal getAppeal = new GetAppeal();
-
-
+    private String setAssignedInLinkedTasksChildren(String initAssignedUser) throws IOException {
         if (issues.get("children").get(0).findValue("children") != null) {
-
-            JsonNode jsonNode = getAppeal.getAppealFromRedmine(issues.get("children").get(0).get("children")
+            JsonNode jsonNode = new RedmineConnector().getTask(issues.get("children").get(0).get("children")
                     .get(0).get("id").asText());
 
-            this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
-
-        } else {
-
-            JsonNode jsonNode = getAppeal.getAppealFromRedmine(issues.get("children").get(0).get("id").asText());
-
-            if (jsonNode.get("issue").findValue("children") != null) {
-
-                this.assignedToTaskInLinkedTasksChildren = jsonNode.get("issue").get("assigned_to").get("name").asText();
-
+            if (jsonNode.get("issue").hasNonNull("assigned_to")) {
+                initAssignedUser = jsonNode
+                        .findPath("assigned_to")
+                        .get("name")
+                        .asText();
             }
-            this.assignedToTaskInLinkedTasksChildren = "";
+        }
+        return initAssignedUser;
+    }
 
+    private String setLinkedParent(String parentId) throws IOException {
+
+        JsonNode jsonNode = new RedmineConnector().getTask(parentId);
+        if (jsonNode.get("issue").findValue("parent") != null) {
+            String linkedParentId = jsonNode.get("issue").get("parent").get("id").asText();
+            jsonNode = new RedmineConnector().getTask(linkedParentId);
+            return jsonNode.get("issue").get("tracker").get("name").asText()
+                    + " #" + jsonNode.get("issue").get("id").asText();
+        } else {
+            return jsonNode.get("issue").get("tracker").get("name").asText()
+                    + " #" + jsonNode.get("issue").get("id").asText();
         }
 
+    }
+
+    private String initAssignedUser() throws IOException {
+        JsonNode jsonNode = new RedmineConnector().getTask(issues.get("children").get(0).get("id").asText());
+        return jsonNode.get("issue").get("assigned_to").get("name").asText();
+    }
+
+    private String initLinkedParent() throws IOException {
+        JsonNode jsonNode = new RedmineConnector().getTask(issues.get("children").get(0).get("id").asText());
+        return jsonNode.get("issue").get("custom_fields").get(0).get("value").asText();
     }
 
     public String getLinkedParent() {
@@ -197,8 +217,8 @@ public class Appeal {
         return subject;
     }
 
-    public String getIncomeCanal() {
-        return incomeCanal;
+    public String getIncomeChannel() {
+        return incomeChannel;
     }
 
     public String getTaskFrom() {
@@ -243,5 +263,13 @@ public class Appeal {
 
     public String getCreatedDate() {
         return createdDate;
+    }
+
+    public String getRelations() {
+        return relations;
+    }
+
+    public boolean isChildren() {
+        return children;
     }
 }

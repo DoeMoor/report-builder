@@ -1,15 +1,15 @@
-import controller.GetAppeal;
-import controller.GetTaskList;
+import controller.RedmineConnector;
 import model.PrivateData;
 import model.Report;
+import view.GetAppeal;
 
 import java.io.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        GetTaskList gt = new GetTaskList();
-        PrivateData privateData = new PrivateData();
+        RedmineConnector gt = new RedmineConnector();
+        PrivateData privateData = new PrivateData(); //TODO refactor config
 
         InputStream inputStream = System.in;
         Reader inputStreamReader = new InputStreamReader(inputStream);
@@ -21,50 +21,42 @@ public class Main {
                     PrivateData.getKeyValue(), PrivateData.getURL()
             );
 
-
             System.out.print("1 = открытые \n2 = закрытые \nВвести типы задач :");
-
-
-
 
             String taskId = bufferedReader.readLine();
 
-            if (taskId.equals("1")){
-                taskId = gt.getTaskList("open","created_on");
+            switch (taskId) {
+                case "1":
+                    taskId = gt.getTaskList("open", "created_on");
+                    break;
+
+                case "2":
+                    taskId = gt.getTaskList("closed", "closed_on");
+                    break;
+
+                case "q":
+                    System.out.print("\033[H\033[2J");
+                    System.out.flush();
+                    System.exit(0);
+
+                case "":
+                    for (String i : Report.getListTask()
+                    ) {
+                        System.out.println(i);
+                    }
+                    break;
+                default:
+                    break;
             }
 
-            if (taskId.equals("2")){
-                taskId = gt.getTaskList("closed","closed_on");
-            }
-
-
-            if (taskId.equals("q")) {
-
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-
-                break;
-            }
-            if (taskId.equals("")){
-
-                for (String i : Report.getListTask()
+            if (!taskId.equals("")) {
+                String[] listTaskId = taskId.split(" ");
+                for (String i : listTaskId
                 ) {
-                    System.out.println(i);
+                    GetAppeal appeal = new GetAppeal();
+                    appeal.setAppealInList(i);
                 }
-
-                break;
-
             }
-
-            String[] listTaskId = taskId.split(" ");
-
-            for (String i : listTaskId
-            ) {
-                GetAppeal appeal = new GetAppeal();
-                appeal.setAppealInList(i);
-            }
-
-
         }
 
 

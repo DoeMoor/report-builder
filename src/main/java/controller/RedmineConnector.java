@@ -9,23 +9,22 @@ import model.PrivateData;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.logging.SimpleFormatter;
 
-public class GetTaskList {
 
+public class RedmineConnector {
 
     public String getTaskList(String status, String dataType) throws IOException {
-
-        Date date = new Date();
         SimpleDateFormat formatDate = new SimpleDateFormat("yyyy-MM-dd");
         StringBuilder idTaskList = new StringBuilder();
+        Date date = new Date();
+        String stringData = formatDate.format(date);
 
         HttpResponse<String> response = Unirest.get(PrivateData.getURL() + ".json")
                 .queryString("key", PrivateData.getKeyValue())
                 .queryString("project_id", "3")
                 .queryString("author_id", "51")
                 .queryString("status_id", status)
-                .queryString(dataType, formatDate.format(date))
+                .queryString(dataType, "2021-11-29")
                 .asString();
 
         ObjectMapper respMap = new ObjectMapper();
@@ -34,18 +33,28 @@ public class GetTaskList {
         for (int i = 0; i < jn.path("issues").size(); i++) {
 
             if (status.equals("open")
-                    && !jn.path("issues").path(i).get("tracker").get("name").asText().equals("Сопровождение")) {
-
+                    && !jn.path("issues").path(i).get("tracker").get("name").asText().equals("Сопровождение")
+                    && !jn.path("issues").path(i).get("tracker").get("name").asText().equals("Выкладка")) {
                 idTaskList.append(jn.path("issues").path(i).get("id").asText()).append(" ");
 
             } else if (jn.path("issues").path(i).get("tracker").get("name").asText().equals("Обращение")
                     || jn.path("issues").path(i).get("tracker").get("name").asText().equals("Инцидент")) {
                 idTaskList.append(jn.path("issues").path(i).get("id").asText()).append(" ");
             }
-
         }
         return idTaskList.toString();
-
     }
 
+    public JsonNode getTask(String id) throws IOException {
+
+        HttpResponse<String> response = Unirest.get(PrivateData.getURL() + "/{taskId}.json")
+                .routeParam("taskId", id)
+                .queryString("key", PrivateData.getKeyValue())
+                .queryString("include", "relations, children")
+                .asString();
+
+
+        ObjectMapper respMap = new ObjectMapper();
+        return respMap.readTree(response.getBody());
+    }
 }

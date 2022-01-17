@@ -13,14 +13,14 @@ public class Appeal {
     private final String trackerName;
     private final String status;
     private final String subject;
-    private final String incomeChannel;
+    private String incomeChannel;
     private final String taskFrom;
     private final String priority;
     private final String linkedTasksAndId;
     private final String linkedTasksChildrenAndId;
     private final String dueDate;
 
-    private final String reasonFoTask;
+    private String reasonFoTask;
     private final String incomeDate;
     private final String assignedTo;
     private final String parentId;
@@ -58,23 +58,28 @@ public class Appeal {
         if (!trackerName.equals("Request")
                 && !trackerName.equals("Инцидент")) {
             if (trackerName.equals("Обращение")) {
-                taskFrom = issues.get("custom_fields").get(4).get("value").asText();
+                taskFrom = issues.get("custom_fields").get(5).get("value").asText();
             } else {
                 taskFrom = issues.get("custom_fields").get(3).get("value").asText();
             }
-            incomeChannel = issues.get("custom_fields").get(0).get("value").asText();
+
+            if (trackerName.equals("Ошибка") || trackerName.equals("Сопровождение")){
+                incomeChannel = issues.get("custom_fields").get(0).get("value").asText();
+            } else {
+                incomeChannel = issues.get("custom_fields").get(1).get("value").asText();
+            }
+
             if (issues.get("project").get("name").asText().equals("ДО1")
                     || trackerName.equals("Сопровождение")) {
                 reasonFoTask = "";
             } else {
-                reasonFoTask = issues.get("custom_fields").get(5).get("value").asText();
+                reasonFoTask = issues.get("custom_fields").get(7).get("value").asText();
             }
             incomeDate = issues.get("custom_fields").get(1).get("value").asText();
 
         } else if (trackerName.equals("Инцидент")
                 && !issues.get("project").get("name").asText().equals("ДО1")) {
-
-
+            try {
             initAssignedUser = initAssignedUser();
             initLinkedParent = initLinkedParent();
 
@@ -89,6 +94,10 @@ public class Appeal {
                             .get("id")
                             .asText()))
                     .getIncomeChannel();
+            } catch (Exception e) {
+                reasonFoTask = "";
+                incomeChannel = "";
+            }
             taskFrom = "";
             incomeDate = "";
 

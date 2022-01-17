@@ -24,7 +24,7 @@ public class RedmineConnector {
                 .queryString("project_id", "3")
                 .queryString("author_id", "51")
                 .queryString("status_id", status)
-                .queryString(dataType, "2021-11-29")
+                .queryString(dataType, stringData)
                 .asString();
 
         ObjectMapper respMap = new ObjectMapper();

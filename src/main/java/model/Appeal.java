@@ -21,7 +21,7 @@ public class Appeal {
     private final String dueDate;
 
     private String reasonFoTask;
-    private final String incomeDate;
+    private String incomeDate;
     private final String assignedTo;
     private final String parentId;
 
@@ -39,7 +39,7 @@ public class Appeal {
         issues = answer.get("issue");
 
         trackerName = issues.get("tracker").get("name").asText();
-        id = "#" + issues.get("id").asText();
+        id = issues.get("id").asText();
         status = issues.get("status").get("name").asText();
         subject = issues.get("subject").asText();
         priority = issues.get("priority").get("name").asText();
@@ -59,6 +59,7 @@ public class Appeal {
                 && !trackerName.equals("Инцидент")) {
             if (trackerName.equals("Обращение")) {
                 taskFrom = issues.get("custom_fields").get(5).get("value").asText();
+                incomeDate = issues.get("custom_fields").get(2).get("value").asText();
             } else {
                 taskFrom = issues.get("custom_fields").get(3).get("value").asText();
             }
@@ -75,7 +76,8 @@ public class Appeal {
             } else {
                 reasonFoTask = issues.get("custom_fields").get(7).get("value").asText();
             }
-            incomeDate = issues.get("custom_fields").get(1).get("value").asText();
+
+
 
         } else if (trackerName.equals("Инцидент")
                 && !issues.get("project").get("name").asText().equals("ДО1")) {
@@ -99,7 +101,7 @@ public class Appeal {
                 incomeChannel = "";
             }
             taskFrom = "";
-            incomeDate = "";
+            incomeDate = issues.get("custom_fields").get(1).get("value").asText();
 
         } else {
 

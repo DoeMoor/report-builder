@@ -28,18 +28,18 @@ public class RedmineConnector {
                 .asString();
 
         ObjectMapper respMap = new ObjectMapper();
-        JsonNode jn = respMap.readTree(response.getBody());
+        JsonNode jsonNode = respMap.readTree(response.getBody());
 
-        for (int i = 0; i < jn.path("issues").size(); i++) {
+        for (int i = 0; i < jsonNode.path("issues").size(); i++) {
 
             if (status.equals("open")
-                    && !jn.path("issues").path(i).get("tracker").get("name").asText().equals("Сопровождение")
-                    && !jn.path("issues").path(i).get("tracker").get("name").asText().equals("Выкладка")) {
-                idTaskList.append(jn.path("issues").path(i).get("id").asText()).append(" ");
+                    && !jsonNode.path("issues").path(i).get("tracker").get("name").asText().equals("Сопровождение")
+                    && !jsonNode.path("issues").path(i).get("tracker").get("name").asText().equals("Выкладка")) {
+                idTaskList.append(jsonNode.path("issues").path(i).get("id").asText()).append(" ");
 
-            } else if (jn.path("issues").path(i).get("tracker").get("name").asText().equals("Обращение")
-                    || jn.path("issues").path(i).get("tracker").get("name").asText().equals("Инцидент")) {
-                idTaskList.append(jn.path("issues").path(i).get("id").asText()).append(" ");
+            } else if (jsonNode.path("issues").path(i).get("tracker").get("name").asText().equals("Обращение")
+                    || jsonNode.path("issues").path(i).get("tracker").get("name").asText().equals("Инцидент")) {
+                idTaskList.append(jsonNode.path("issues").path(i).get("id").asText()).append(" ");
             }
         }
         return idTaskList.toString();
